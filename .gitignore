@@ -60,3 +60,6 @@ dkms.conf
 
 # Ignore hurust
 hurust.h
+
+# Input files
+*.txt
