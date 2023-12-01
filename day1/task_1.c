@@ -20,25 +20,22 @@ int main(void)
     size_t len = 0;
 
     i64 sum = 0;
-    u8 buf[2] = { 0 };
     while (getline(&line, &len, fp) != -1) {
-        bool found_num = false;
+        
+		bool found_num = false;
         bool found_second = false;
-        memset(buf, 0, sizeof(buf));
+		u8 buf[2] = { 0 };
+
         for (u8 *c = line; *c != '\0'; c++) {
             if (isdigit(*c)) {
-                if (!found_num) {
-                    buf[0] = *c;
-                    found_num = true;
-                } else {
-                    buf[1] = *c;
-                    found_second = true;
-                }
+                *(buf + found_num) = *c;
+                found_second = found_num;
+                found_num = !found_num ? true : found_num;
             }
         }
 
         if (!found_second) {
-            buf[1] = buf[0];
+            *(buf + 1) = *(buf);
         }
 
         sum += atoi(buf);

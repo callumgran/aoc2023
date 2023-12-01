@@ -21,60 +21,52 @@ int main(void)
 
     char *line = NULL;
     size_t len = 0;
-
     i64 sum = 0;
-    u8 buf[2] = { 0 };
-    u8 text_buf[6] = { 0 };
-    u64 line_no = 0;
+
     while (getline(&line, &len, fp) != -1) {
-        line_no++;
+
         bool found_num = false;
         bool found_second = false;
-        memset(buf, 0, sizeof(buf));
+        u8 buf[2] = { 0 };
 
         for (u8 *c = line; *c != '\0'; c++) {
-            if (isdigit(*c)) {
-                if (!found_num) {
-                    buf[0] = *c;
-                    found_num = true;
-                } else {
-                    buf[1] = *c;
-                    found_second = true;
-                }
 
+            if (isdigit(*c)) {
+                *(buf + found_num) = *c;
+                found_second = found_num;
+                found_num = !found_num ? true : found_num;
                 continue;
             }
 
-            memset(text_buf, 0, sizeof(text_buf));
+            u8 text_buf[6] = { 0 };
             bool found_str = false;
+
             for (int i = 0; i < 5 && strlen(c) - i >= 0; i++) {
-                text_buf[i] = *(c + i);
+                *(text_buf + i) = *(c + i);
+
                 if (isdigit(*(c + i)) && !found_num) {
-                    buf[0] = *(c + i);
+                    *buf = *(c + i);
                     found_num = true;
                 }
+
                 for (int j = 0; j < 9; j++) {
                     if (strstr(text_buf, digits[j]) != NULL) {
-                        if (!found_num) {
-                            buf[0] = j + 1 + '0';
-                            found_num = true;
-                        } else {
-                            buf[1] = j + 1 + '0';
-                            found_second = true;
-                        }
+                        // This is terribly awful and is evil to all that is good, but it is funny
+                        // as it works.
+                        *(buf + found_num) = j + 1 + '0';
+                        found_second = found_num;
+                        found_num = !found_num ? true : found_num;
                         found_str = true;
+                        c += i - 1;
+                        goto loop_end;
                     }
                 }
-
-                if (found_str) {
-                    c += i - 1;
-                    break;
-                }
             }
+loop_end:
         }
 
         if (!found_second) {
-            buf[1] = buf[0];
+            *(buf + 1) = *(buf);
         }
 
         sum += atoi(buf);
