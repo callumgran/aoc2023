@@ -1,8 +1,8 @@
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "hurust.h"
 #define HURUST_IMPLEMENTATION
@@ -20,12 +20,13 @@ typedef int64_t i64;
 typedef float f32;
 typedef double f64;
 
-int f_next_item(FILE * restrict fp, u8 * restrict buf, u32 buf_len)
+int f_next_item(FILE *restrict fp, u8 *restrict buf, u32 buf_len)
 {
     u8 ch;
     u32 i = 0;
 
-    while ((ch = fgetc(fp)) == ' ');
+    while ((ch = fgetc(fp)) == ' ')
+        ;
 
     if (ch == EOF)
         return -1;
@@ -49,16 +50,17 @@ int f_next_item(FILE * restrict fp, u8 * restrict buf, u32 buf_len)
 
     if (ch == EOF)
         return -1;
-    
+
     return 1;
 }
 
-int f_next_str(FILE * restrict fp, char * restrict buf, u32 buf_len)
+int f_next_str(FILE *restrict fp, char *restrict buf, u32 buf_len)
 {
     u8 ch;
     u64 i = 0;
 
-    while ((ch = fgetc(fp)) == ' ');
+    while ((ch = fgetc(fp)) == ' ')
+        ;
 
     if (ch == EOF)
         return -1;
@@ -88,36 +90,37 @@ int f_next_str(FILE * restrict fp, char * restrict buf, u32 buf_len)
     return 1;
 }
 
-i32 f_next_int(FILE * restrict fp)
+i32 f_next_int(FILE *restrict fp)
 {
-	u8 buf[11] = {0};
-    
+    u8 buf[11] = { 0 };
+
     i32 rc = f_next_item(fp, buf, 11);
-	if (rc == -1) {
-		fprintf(stderr, "Null from f_next_item.\n");
-		return -1;
-	}
+    if (rc == -1) {
+        fprintf(stderr, "Null from f_next_item.\n");
+        return -1;
+    }
 
     i32 ret = atoi(buf);
     return ret;
 }
 
-f64 f_next_double(FILE * restrict fp)
+f64 f_next_double(FILE *restrict fp)
 {
-	u8 buf[11] = {0};
-	
-	i32 rc = f_next_item(fp, buf, 11);
-	if (rc == -1) {
-		fprintf(stderr, "Null from f_next_item.\n");
-		return -1;
-	}
+    u8 buf[11] = { 0 };
 
-	f64 ret = atof(buf);
-	return ret;
+    i32 rc = f_next_item(fp, buf, 11);
+    if (rc == -1) {
+        fprintf(stderr, "Null from f_next_item.\n");
+        return -1;
+    }
+
+    f64 ret = atof(buf);
+    return ret;
 }
 
-void consume_line(FILE * restrict fp)
+void consume_line(FILE *restrict fp)
 {
-	u8 ch;
-	while ((ch = fgetc(fp)) != '\n' && ch != EOF);
+    u8 ch;
+    while ((ch = fgetc(fp)) != '\n' && ch != EOF)
+        ;
 }
