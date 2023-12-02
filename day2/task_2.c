@@ -19,7 +19,7 @@ int main(void)
     char *line = NULL;
     size_t len = 0;
 
-    i64 mult_sum = 0;
+    i64 box_sum = 0;
 
     while (getline(&line, &len, fp) != -1) {
         u8 *c = line;
@@ -32,37 +32,29 @@ int main(void)
         while (*c != '\0') {
             c += *c == ';';
 
-            while (*c != ';' && *c != '\0') {
+            do {
                 i32 tmp = str_next_int(&c);
-                while (!isalpha(*c) && *c != '\0')
+                if (tmp == -1)
+                    goto loop_end;
+
+                while (!isalpha(*c))
                     c++;
 
-                if (*c == 'r') {
-                    if (tmp > red) {
-                        red = tmp;
-                    }
-                } else if (*c == 'g') {
-                    if (tmp > green) {
-                        green = tmp;
-                    }
-                } else if (*c == 'b') {
-                    if (tmp > blue) {
-                        blue = tmp;
-                    }
-                }
+                red = tmp > red && *c == 'r' ? tmp : red;
+                green = tmp > green && *c == 'g' ? tmp : green;
+                blue = tmp > blue && *c == 'b' ? tmp : blue;
 
-                while (*c != '\0' && isalpha(*c)) {
+                while (isalpha(*c))
                     c++;
-                }
-            }
+            } while (*c != ';' && *c != '\0');
         }
 
 loop_end:
 
-        mult_sum += red * green * blue;
+        box_sum += red * green * blue;
     }
 
-    fprintf(stdout, "Sum: %ld\n", mult_sum);
+    fprintf(stdout, "Sum: %ld\n", box_sum);
 
     fclose(fp);
 

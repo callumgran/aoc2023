@@ -27,7 +27,6 @@ int main(void)
 
     while (getline(&line, &len, fp) != -1) {
         u8 *c = line;
-
         i32 id = str_next_int(&c);
 
         while (*c != '\0') {
@@ -36,32 +35,29 @@ int main(void)
             i64 red = 0;
             i64 green = 0;
             i64 blue = 0;
-            while (*c != ';' && *c != '\0') {
+            do {
                 i32 tmp = str_next_int(&c);
-                while (!isalpha(*c) && *c != '\0')
+                if (tmp == -1)
+                    goto loop_end;
+
+                while (!isalpha(*c))
                     c++;
 
-                if (*c == 'r') {
-                    red += tmp;
-                } else if (*c == 'g') {
-                    green += tmp;
-                } else if (*c == 'b') {
-                    blue += tmp;
-                }
+                red += tmp * (*c == 'r');
+                green += tmp * (*c == 'g');
+                blue += tmp * (*c == 'b');
 
                 if (red > RED_MAX || green > GREEN_MAX || blue > BLUE_MAX) {
                     id = 0;
                     goto loop_end;
                 }
 
-                while (*c != '\0' && isalpha(*c)) {
+                while (isalpha(*c))
                     c++;
-                }
-            }
+            } while (*c != ';' && *c != '\0');
         }
 
 loop_end:
-
         id_sum += id;
     }
 
