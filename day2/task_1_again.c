@@ -25,39 +25,35 @@ int main(void)
 
     while (getline(&line, &len, fp) != -1) {
         u8 *c = line;
-        i32 id = str_next_i32(&c);
+        u8 str_buf[6] = { 0 };
+        i32 id = 0;
+        i32 consumed = 0;
 
-        while (*c != '\0') {
-            c += *c == ';';
+        sscanf(c, "%s %d%n", str_buf, &id, &consumed);
+        c += consumed + 1; // + 1 is to skip the colon
 
-            i32 rgb[3] = { 0 };
-            do {
-                i32 tmp = str_next_i32(&c);
-                if (tmp == -1)
-                    goto loop_end;
+        i64 rgb[3] = { 0 };
+        i32 tmp = 0;
+        while (sscanf(c, "%d %s%n", &tmp, str_buf, &consumed) == 2) {
+            c += consumed;
 
-                while (!isalpha(*c))
-                    c++;
+            rgb[rgb_index_map_get(*str_buf)] += tmp;
 
-                rgb[rgb_index_map_get(*c)] += tmp;
+            if (RGB_OVERFLOW(rgb)) {
+                id = 0;
+                break;
+            }
 
-                if (RGB_OVERFLOW(rgb)) {
-                    id = 0;
-                    goto loop_end;
-                }
-
-                while (isalpha(*c))
-                    c++;
-            } while (*c != ';' && *c != '\0');
+            if (*(str_buf + strlen(str_buf) - 1) == ';')
+                memset(rgb, 0, sizeof(rgb));
         }
-
-loop_end:
         id_sum += id;
     }
 
     fprintf(stdout, "Sum: %ld\n", id_sum);
 
     fclose(fp);
+    free(line);
 
     return 0;
 }

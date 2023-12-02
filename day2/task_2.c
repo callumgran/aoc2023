@@ -7,6 +7,9 @@
 
 #include "../common.h"
 
+#define RGB_OVERFLOW(rgb) (*(rgb) > 12 || *((rgb) + 1) > 13 || *((rgb) + 2) > 14)
+GEN_MAP(rgb_index, u8, i32, lambda(u8, (u8 a, u8 b), { return a == b; }), 'r', 0, 'g', 1, 'b', 2);
+
 int main(void)
 {
     FILE *fp = fopen("./day2/input.txt", "r");
@@ -24,25 +27,21 @@ int main(void)
     while (getline(&line, &len, fp) != -1) {
         u8 *c = line;
 
-        i32 id = str_next_int(&c);
+        i32 id = str_next_i32(&c);
 
-        i64 red = 0;
-        i64 green = 0;
-        i64 blue = 0;
+        i32 rgb[3] = { 0 };
         while (*c != '\0') {
             c += *c == ';';
 
             do {
-                i32 tmp = str_next_int(&c);
+                i32 tmp = str_next_i32(&c);
                 if (tmp == -1)
                     goto loop_end;
 
                 while (!isalpha(*c))
                     c++;
 
-                red = tmp > red && *c == 'r' ? tmp : red;
-                green = tmp > green && *c == 'g' ? tmp : green;
-                blue = tmp > blue && *c == 'b' ? tmp : blue;
+                SET_LARGEST_PRIMITIVE(rgb[rgb_index_map_get(*c)], tmp);
 
                 while (isalpha(*c))
                     c++;
@@ -51,7 +50,7 @@ int main(void)
 
 loop_end:
 
-        box_sum += red * green * blue;
+        box_sum += ARRAY_BINOP_RESULT(rgb, 3, *);
     }
 
     fprintf(stdout, "Sum: %ld\n", box_sum);

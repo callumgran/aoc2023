@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "hurust.h"
 #define HURUST_IMPLEMENTATION
+#include "hurust.h"
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -21,40 +21,7 @@ typedef int64_t i64;
 typedef float f32;
 typedef double f64;
 
-int f_next_item(FILE *restrict fp, u8 *restrict buf, u32 buf_len)
-{
-    u8 ch;
-    u32 i = 0;
-
-    while ((ch = fgetc(fp)) == ' ')
-        ;
-
-    if (ch == EOF)
-        return -1;
-
-    buf[i++] = ch;
-
-    do {
-        ch = fgetc(fp);
-        if (ch == ' ' || ch == '\t') {
-            buf[i] = '\0';
-            break;
-        } else if (ch == '\n') {
-            break;
-        } else if (i >= buf_len) {
-            fprintf(stderr, "Error parsing file: item longer than %d chars\n", buf_len);
-            return -1;
-        }
-
-        buf[i++] = ch;
-    } while (ch != EOF);
-
-    if (ch == EOF)
-        return -1;
-
-    return 1;
-}
-
+// String parsing functions
 int str_next_item(u8 *restrict inn, u8 *restrict buf, u32 buf_len)
 {
     u32 i = 0;
@@ -76,8 +43,6 @@ int str_next_item(u8 *restrict inn, u8 *restrict buf, u32 buf_len)
         } else if (*c == '\n') {
             break;
         } else if (i >= buf_len) {
-            printf("i: %d\n", i);
-            fprintf(stderr, "Error parsing file: item longer than %d chars\n", buf_len);
             return -1;
         }
 
@@ -90,57 +55,58 @@ int str_next_item(u8 *restrict inn, u8 *restrict buf, u32 buf_len)
     return 1;
 }
 
-int f_next_str(FILE *restrict fp, char *restrict buf, u32 buf_len)
+int __str_next_str(u8 *restrict inn, char *restrict buf, u32 buf_len)
 {
-    u8 ch;
     u64 i = 0;
+    u8 *c = inn;
 
-    while ((ch = fgetc(fp)) == ' ')
-        ;
+    while (*c == ' ')
+        c++;
 
-    if (ch == EOF)
+    if (*c == '\0')
         return -1;
 
-    ch = fgetc(fp);
-
-    buf[i++] = ch;
+    buf[i++] = *c;
 
     do {
-        ch = fgetc(fp);
-        if (ch == '"') {
+        c++;
+        if (*c == '"') {
             buf[i] = '\0';
             break;
-        } else if (ch == '\n') {
+        } else if (*c == '\n') {
             break;
         } else if (i >= buf_len) {
-            fprintf(stderr, "Error parsing file: item longer than %d chars\n", buf_len);
             return -1;
         }
 
-        buf[i++] = ch;
-    } while (ch != EOF);
+        buf[i++] = *c;
+    } while (*c != '\0');
 
-    if (ch == EOF)
+    if (*c == '\0')
         return -1;
 
     return 1;
 }
 
-i32 f_next_int(FILE *restrict fp)
+char *str_next_str(u8 **restrict data)
 {
-    u8 buf[11] = { 0 };
+    char buf[256] = { 0 };
+    u8 *c = *data;
 
-    i32 rc = f_next_item(fp, buf, 11);
+    i32 rc = __str_next_str(c, buf, 256);
     if (rc == -1) {
-        fprintf(stderr, "Null from f_next_item.\n");
-        return -1;
+        fprintf(stderr, "str_next_str: __str_next_str returned -1.\n");
+        return NULL;
     }
 
-    i32 ret = atoi(buf);
+    *data += strlen(buf) + 1;
+
+    char *ret = malloc(strlen(buf) + 1);
+    strcpy(ret, buf);
     return ret;
 }
 
-i32 str_next_int(u8 **restrict data)
+i32 str_next_i32(u8 **restrict data)
 {
     u8 buf[11] = { 0 };
     u8 *c = *data;
@@ -155,7 +121,7 @@ i32 str_next_int(u8 **restrict data)
 
     i32 rc = str_next_item(c, buf, 11);
     if (rc == -1) {
-        fprintf(stderr, "Null from f_next_item.\n");
+        fprintf(stderr, "str_next_i32: str_next_item returned -1.\n");
         return -1;
     }
 
@@ -165,23 +131,83 @@ i32 str_next_int(u8 **restrict data)
     return ret;
 }
 
-f64 f_next_double(FILE *restrict fp)
+f64 str_next_f64(u8 **restrict data)
 {
-    u8 buf[11] = { 0 };
+    u8 buf[128] = {
+        0
+    }; // Could be 1074, but when would you ever need to parse a number with 1074 digits?
+    u8 *c = *data;
 
-    i32 rc = f_next_item(fp, buf, 11);
+    u32 ws_count = 0;
+    while (!isdigit(*c)) {
+        if (*c == '\0')
+            return -1;
+        c++;
+        ws_count++;
+    }
+
+    i32 rc = str_next_item(c, buf, 11);
     if (rc == -1) {
-        fprintf(stderr, "Null from f_next_item.\n");
+        fprintf(stderr, "str_next_f64: str_next_item returned -1.\n");
         return -1;
     }
+
+    *data += strlen(buf) + ws_count - 1;
 
     f64 ret = atof(buf);
     return ret;
 }
 
-void consume_line(FILE *restrict fp)
-{
-    u8 ch;
-    while ((ch = fgetc(fp)) != '\n' && ch != EOF)
-        ;
-}
+/* Cursed macros that are added for funsies and because I can. */
+#define ARRAY_BINOP_RESULT(a, len, op) \
+    ({                                 \
+        i64 ret = a[0];                \
+        for (u32 i = 1; i < len; i++)  \
+            ret = ret op a[i];         \
+        ret;                           \
+    })
+
+#define SET_LARGEST_PRIMITIVE(a, b) (a = a > b ? a : b)
+#define SET_LARGEST(a, b, cmp) (a = cmp(a, b) ? a : b)
+
+#define SET_SMALLEST_PRIMITIVE(a, b) (a = a < b ? a : b)
+#define SET_SMALLEST(a, b, cmp) (a = cmp(a, b) ? a : b)
+
+// This next section is taken from my JsonStruct project
+// Eval obfuscation loop to allow for recursive macro expansion by keeping tokens unevaluated
+// Each level multiplies the effort of the level before, evaluating the input 365 times in total.
+// In other words, calling EVAL (A (blah)) would produce 365 copies of the word blah, followed by a
+// final un-evaluated B (blah). This provides the basic framework for recursion, at least within a
+// certain stack depth.
+#define EVAL0(...) __VA_ARGS__
+#define EVAL1(...) EVAL0(EVAL0(EVAL0(__VA_ARGS__)))
+#define EVAL2(...) EVAL1(EVAL1(EVAL1(__VA_ARGS__)))
+#define EVAL3(...) EVAL2(EVAL2(EVAL2(__VA_ARGS__)))
+#define EVAL4(...) EVAL3(EVAL3(EVAL3(__VA_ARGS__)))
+#define EVAL5(...) EVAL4(EVAL4(EVAL4(__VA_ARGS__)))
+#define EVAL(...) EVAL4(__VA_ARGS__)
+
+#define NOP
+
+// Recursive macro's cannot call themselves directly, so we need helper macros to do the recursion
+// for us.
+#define MAP_POP_TWO_ARGS0(F, X, Y, ...) F(X, Y) __VA_OPT__(MAP_POP_TWO_ARGS1 NOP(F, __VA_ARGS__))
+#define MAP_POP_TWO_ARGS1(F, X, Y, ...) F(X, Y) __VA_OPT__(MAP_POP_TWO_ARGS0 NOP(F, __VA_ARGS__))
+
+#define MAP_TWO_ARGS(F, ...) __VA_OPT__(EVAL(MAP_POP_TWO_ARGS0(F, __VA_ARGS__)))
+
+// Macro for generating a sim
+#define MAP_ENTRY(key, val) { key, val },
+
+#define GEN_MAP(name, keytype, valtype, eq_fn, ...)            \
+    static struct name##_map_entry_t {                         \
+        keytype key;                                           \
+        valtype val;                                           \
+    } name##_map[] = { MAP_TWO_ARGS(MAP_ENTRY, __VA_ARGS__) }; \
+    valtype name##_map_get(const keytype key)                  \
+    {                                                          \
+        struct name##_map_entry_t *ptr = name##_map;           \
+        for (; ptr->key && !eq_fn(key, ptr->key); ++ptr)       \
+            ;                                                  \
+        return ptr->val;                                       \
+    }
