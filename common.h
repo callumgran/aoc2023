@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -54,6 +55,41 @@ int f_next_item(FILE *restrict fp, u8 *restrict buf, u32 buf_len)
     return 1;
 }
 
+int str_next_item(u8 *restrict inn, u8 *restrict buf, u32 buf_len)
+{
+    u32 i = 0;
+
+    u8 *c = inn;
+    while (*c == ' ')
+        c++;
+
+    if (*c == '\0')
+        return -1;
+
+    buf[i++] = *c;
+
+    do {
+        c++;
+        if (*c == ' ' || *c == '\t') {
+            buf[i] = '\0';
+            break;
+        } else if (*c == '\n') {
+            break;
+        } else if (i >= buf_len) {
+            printf("i: %d\n", i);
+            fprintf(stderr, "Error parsing file: item longer than %d chars\n", buf_len);
+            return -1;
+        }
+
+        buf[i++] = *c;
+    } while (*c != '\0');
+
+    if (*c == '\0')
+        return -1;
+
+    return 1;
+}
+
 int f_next_str(FILE *restrict fp, char *restrict buf, u32 buf_len)
 {
     u8 ch;
@@ -99,6 +135,31 @@ i32 f_next_int(FILE *restrict fp)
         fprintf(stderr, "Null from f_next_item.\n");
         return -1;
     }
+
+    i32 ret = atoi(buf);
+    return ret;
+}
+
+i32 str_next_int(u8 **restrict data)
+{
+    u8 buf[11] = { 0 };
+    u8 *c = *data;
+
+    u32 ws_count = 0;
+    while (!isdigit(*c)) {
+        if (*c == '\0')
+            return -1;
+        c++;
+        ws_count++;
+    }
+
+    i32 rc = str_next_item(c, buf, 11);
+    if (rc == -1) {
+        fprintf(stderr, "Null from f_next_item.\n");
+        return -1;
+    }
+
+    *data += strlen(buf) + ws_count - 1;
 
     i32 ret = atoi(buf);
     return ret;
