@@ -106,6 +106,43 @@ char *str_next_str(u8 **restrict data)
     return ret;
 }
 
+i32 str_next_i32_0(u8 **restrict data, i32 *start, i32 *end)
+{
+    u8 buf[11] = { 0 };
+    u8 *c = *data;
+
+    u32 ws_count = 0;
+    while (!isdigit(*c)) {
+        if (*c == '\0')
+            return -1;
+        c++;
+        ws_count++;
+    }
+
+    *start = ws_count;
+    u32 i = 0;
+    do {
+        if (!isdigit(*c)) {
+            buf[i] = '\0';
+            break;
+        } else if (*c == '\n') {
+            break;
+        } else if (i >= 11) {
+            return -1;
+        }
+
+        buf[i++] = *c++;
+    } while (*c != '\0');
+
+    if (i == 0)
+        return -1;
+
+    *end = i + ws_count - 1;
+    *data += *end + 1;
+
+    return atoi(buf);
+}
+
 i32 str_next_i32(u8 **restrict data)
 {
     u8 buf[11] = { 0 };
