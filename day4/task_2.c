@@ -4,11 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../common.h"
 
 int main(void)
 {
+    time_t t = clock();
     FILE *fp = fopen("./day4/input.txt", "r");
 
     if (fp == NULL) {
@@ -51,6 +53,9 @@ int main(void)
     shashset_free(&winning_nums);
     free(line);
     fclose(fp);
+    t = clock() - t;
 
+    printf("Execution time: %fms\n", ((double)t) / CLOCKS_PER_SEC * 1000);
+    
     return 0;
 }

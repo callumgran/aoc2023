@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../common.h"
 
@@ -12,6 +13,7 @@ GEN_MAP(rgb_index, u8, i32, lambda(u8, (u8 a, u8 b), { return a == b; }), 'r', 0
 
 int main(void)
 {
+    time_t t = clock();
     FILE *fp = fopen("./day2/input.txt", "r");
 
     if (fp == NULL) {
@@ -58,6 +60,9 @@ loop_end:
     fprintf(stdout, "Sum: %ld\n", id_sum);
 
     fclose(fp);
+
+    t = clock() - t;
+    printf("Execution time: %fms\n", ((double)t) / CLOCKS_PER_SEC * 1000);
 
     return 0;
 }

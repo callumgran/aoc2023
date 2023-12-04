@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../common.h"
 
@@ -21,13 +22,14 @@ struct gear_t {
 
 int main(void)
 {
+    time_t t = clock();
     FILE *fp = fopen("./day3/input.txt", "r");
     VECTOR(struct number_t, num);
     VECTOR(struct gear_t, gear);
     struct num_vector_t numbers;
     struct gear_vector_t gears;
-    vector_init(&numbers, HR_GLOBAL_ALLOCATOR, 10000, NULL);
-    vector_init(&gears, HR_GLOBAL_ALLOCATOR, 10000, NULL);
+    vector_init(&numbers, HR_GLOBAL_ALLOCATOR, 5000, NULL);
+    vector_init(&gears, HR_GLOBAL_ALLOCATOR, 2500, NULL);
 
     if (fp == NULL) {
         fprintf(stderr, "Error opening file. \n");
@@ -89,11 +91,12 @@ int main(void)
 
     fprintf(stdout, "Sum: %ld\n", sum);
 
-    free(line);
-
     vector_free(&numbers);
-
+    free(line);
     fclose(fp);
+
+    t = clock() - t;
+    printf("Execution time: %fms\n", ((double)t) / CLOCKS_PER_SEC * 1000);
 
     return 0;
 }

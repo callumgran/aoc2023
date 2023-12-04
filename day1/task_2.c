@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../common.h"
 
@@ -12,6 +13,7 @@ const char const *digits[9] = { "one", "two",   "three", "four", "five",
 
 int main(void)
 {
+    time_t t = clock();
     FILE *fp = fopen("./day1/input.txt", "r");
 
     if (fp == NULL) {
@@ -73,6 +75,9 @@ loop_end:
     fprintf(stdout, "Sum: %ld\n", sum);
 
     fclose(fp);
+
+    t = clock() - t;
+    printf("Execution time: %fms\n", ((double)t) / CLOCKS_PER_SEC * 1000);
 
     return 0;
 }
