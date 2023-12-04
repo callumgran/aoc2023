@@ -23,14 +23,14 @@ int main(void)
     u64 sum = 0;
     while (getline(&line, &len, fp) != -1) {
         u8 *c = line;
-        str_next_i32_0(&c, &(int){0}, &(int){0});
+        str_next_i32_0(&c, &(int){ 0 }, &(int){ 0 });
 
         i32 num = 0;
-        while (*(c + 1) != '|' && (num = str_next_i32_0(&c, &(int){0}, &(int){0})) != -1)
+        while (*(c + 1) != '|' && (num = str_next_i32_0(&c, &(int){ 0 }, &(int){ 0 })) != -1)
             shashset_insert(&winning_nums, num);
 
         u32 tmp = 0;
-        while ((num = str_next_i32_0(&c, &(int){0}, &(int){0})) != -1)
+        while ((num = str_next_i32_0(&c, &(int){ 0 }, &(int){ 0 })) != -1)
             if (shashset_contains(&winning_nums, num))
                 tmp += tmp == 0 ? 1 : tmp;
 
