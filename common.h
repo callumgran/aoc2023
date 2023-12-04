@@ -195,6 +195,11 @@ f64 str_next_f64(u8 **restrict data)
     return ret;
 }
 
+int cmp_i32(const i32 a, const i32 b)
+{
+    return a - b;
+}
+
 /* Cursed macros that are added for funsies and because I can. */
 #define ARRAY_BINOP_RESULT(a, len, op) \
     ({                                 \

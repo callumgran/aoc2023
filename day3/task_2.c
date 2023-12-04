@@ -91,6 +91,8 @@ int main(void)
 
     free(line);
 
+    vector_free(&numbers);
+
     fclose(fp);
 
     return 0;
